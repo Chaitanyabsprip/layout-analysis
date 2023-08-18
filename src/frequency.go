@@ -12,7 +12,26 @@ func GetCorpus() string {
 }
 
 type Frequency struct {
-	Corpus string
+	UnigramCount      map[string]int
+	BigramCount       map[string]int
+	UnigramNormalised map[string]float64
+	BigramNormalised  map[string]float64
+}
+
+func NewFrequency() *Frequency {
+	c := corpus{corpus: GetCorpus()}
+	uniC, uniN := c.ngramFrequency(1)
+	biC, biN := c.ngramFrequency(2)
+	return &Frequency{
+		UnigramCount:      uniC,
+		BigramCount:       biC,
+		UnigramNormalised: uniN,
+		BigramNormalised:  biN,
+	}
+}
+
+type corpus struct {
+	corpus string
 }
 
 type nGramType int
@@ -23,13 +42,6 @@ const (
 	biG
 	uniGN
 	biGN
-)
-
-var (
-	unigramCount = make(map[string]int)
-	bigramCount  = make(map[string]int)
-	unigramNorm  = make(map[string]float64)
-	bigramNorm   = make(map[string]float64)
 )
 
 func (n nGramType) Filename() string {
@@ -75,27 +87,6 @@ func getNgram(n int, isCount bool) nGramType {
 	return invalid
 }
 
-func saveToVar[T int | float64](val map[string]T, ngram nGramType) {
-	switch ngram {
-	case uniG:
-		if source, ok := any(val).(map[string]int); ok {
-			copyMap(unigramCount, source)
-		}
-	case biG:
-		if source, ok := any(val).(map[string]int); ok {
-			copyMap(bigramCount, source)
-		}
-	case uniGN:
-		if source, ok := any(val).(map[string]float64); ok {
-			copyMap(unigramNorm, source)
-		}
-	case biGN:
-		if source, ok := any(val).(map[string]float64); ok {
-			copyMap(bigramNorm, source)
-		}
-	}
-}
-
 func saveToFile[T int | float64](val map[string]T, ngram nGramType) {
 	filename := ngram.Filename()
 	json, err := json.Marshal(val)
@@ -112,47 +103,24 @@ func readFromFile(ngramtype nGramType) []byte {
 	return content
 }
 
-func getCacheFromFile(ngramtype nGramType) any {
+func getCache[T int | float64](ngramtype nGramType) map[string]T {
 	jsonStr := readFromFile(ngramtype)
-	val := make(map[string]int)
+	val := make(map[string]T)
 	err := json.Unmarshal(jsonStr, &val)
 	if err == nil {
-		saveToVar(val, ngramtype)
 		return val
 	}
 	return nil
 }
 
-func getCache(ngramtype nGramType) any {
-	switch ngramtype {
-	case uniG:
-		if len(unigramCount) != 0 {
-			return unigramCount
-		}
-	case biG:
-		if len(bigramCount) != 0 {
-			return bigramCount
-		}
-	case uniGN:
-		if len(unigramNorm) != 0 {
-			return unigramNorm
-		}
-	case biGN:
-		if len(bigramNorm) != 0 {
-			return bigramNorm
-		}
-	}
-	return getCacheFromFile(ngramtype)
-}
-
-func (f *Frequency) NgramCount(n int) map[string]int {
+func (f *corpus) ngramCount(n int) map[string]int {
 	ngramtype := getNgram(n, true)
-	cached := getCache(ngramtype)
-	if ng, ok := cached.(map[string]int); ok && ng != nil {
-		return ng
+	cached := getCache[int](ngramtype)
+	if cached != nil {
+		return cached
 	}
 	ngrams := make(map[string]int)
-	chars := strings.Split(strings.TrimSpace(f.Corpus), "")
+	chars := strings.Split(strings.TrimSpace(f.corpus), "")
 	for i := 0; i < len(chars)-n+1; i++ {
 		ngram := strings.Join(chars[i:i+n], "")
 		if strings.ContainsAny(ngram, " \n\t") {
@@ -160,7 +128,6 @@ func (f *Frequency) NgramCount(n int) map[string]int {
 		}
 		ngrams[ngram]++
 	}
-	saveToVar(ngrams, ngramtype)
 	saveToFile(ngrams, ngramtype)
 	return ngrams
 }
@@ -181,16 +148,15 @@ func normalise(slice map[string]int, total int) map[string]float64 {
 	return normalised
 }
 
-func (f *Frequency) NgramNormalised(n int) map[string]float64 {
+func (f *corpus) ngramFrequency(n int) (map[string]int, map[string]float64) {
 	ngramtype := getNgram(n, false)
-	cached := getCache(ngramtype)
-	if ng, ok := cached.(map[string]float64); ok && ng != nil {
-		return ng
+	count := f.ngramCount(n)
+	cached := getCache[float64](ngramtype)
+	if cached != nil {
+		return count, cached
 	}
-	ngrams := f.NgramCount(n)
-	total := sum(ngrams)
-	normalised := normalise(ngrams, total)
-	saveToVar(normalised, ngramtype)
+	total := sum(count)
+	normalised := normalise(count, total)
 	saveToFile(normalised, ngramtype)
-	return normalised
+	return count, normalised
 }

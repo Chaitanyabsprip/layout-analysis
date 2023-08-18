@@ -16,8 +16,7 @@ var (
 )
 
 func main() {
-	corpus := analysis.GetCorpus()
-	freq := analysis.Frequency{Corpus: corpus}
+	freq := analysis.NewFrequency()
 	keymap := [3][10]string{
 		{"/", "v", "w", "m", "j", "z", "f", "u", "x", "q"},
 		{"a", "s", "r", "t", "g", "p", "n", "e", "o", "i"},
@@ -25,6 +24,6 @@ func main() {
 	}
 
 	config := analysis.Config{Keymap: keymap, EffortMap: effortMap, FingerMap: fingerMap}
-	anal := analysis.NewAnalysis(config, freq)
+	anal := analysis.NewAnalysis(config, *freq)
 	analysis.Print(*anal)
 }

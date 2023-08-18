@@ -62,7 +62,7 @@ func (a *Analyzer) EffortRating(fingerEffortMap map[int]float64) float64 {
 
 func (a *Analyzer) FingerEffort() map[int]float64 {
 	fingerEffortMap := make(map[int]float64)
-	ngramNorm := a.frequency.NgramNormalised(1)
+	ngramNorm := a.frequency.UnigramNormalised
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 10; j++ {
 			finger := a.config.FingerMap[i][j]
@@ -74,7 +74,7 @@ func (a *Analyzer) FingerEffort() map[int]float64 {
 }
 
 func (a *Analyzer) InrollRating() float64 {
-	ngramNormalised := a.frequency.NgramNormalised(2)
+	ngramNormalised := a.frequency.BigramNormalised
 	rating := 0.0
 	for _, bigram := range a.layout.Inrolls() {
 		rating += ngramNormalised[bigram]
@@ -83,7 +83,7 @@ func (a *Analyzer) InrollRating() float64 {
 }
 
 func (a *Analyzer) OutrollRating() float64 {
-	ngramNormalised := a.frequency.NgramNormalised(2)
+	ngramNormalised := a.frequency.BigramNormalised
 	rating := 0.0
 	for _, bigram := range a.layout.Outrolls() {
 		rating += ngramNormalised[bigram]
@@ -92,7 +92,7 @@ func (a *Analyzer) OutrollRating() float64 {
 }
 
 func (a *Analyzer) RepeatEffort() float64 {
-	ngramNormalised := a.frequency.NgramNormalised(2)
+	ngramNormalised := a.frequency.BigramNormalised
 	rating := 0.0
 	for _, row := range a.layout.keymap {
 		for _, key := range row {
@@ -103,7 +103,7 @@ func (a *Analyzer) RepeatEffort() float64 {
 }
 
 func (a *Analyzer) SfbRating() float64 {
-	ngramNormalised := a.frequency.NgramNormalised(2)
+	ngramNormalised := a.frequency.BigramNormalised
 	rating := 0.0
 	for _, sfb := range a.layout.Sfbs() {
 		rating += ngramNormalised[sfb]
@@ -111,8 +111,12 @@ func (a *Analyzer) SfbRating() float64 {
 	return rating * 100
 }
 
+// func (a *Analyzer) FingerBigramFrequency() map[int]float64 {
+//
+// }
+
 func (a *Analyzer) TopSfbs() map[string]float64 {
-	ngramNormalised := a.frequency.NgramNormalised(2)
+	ngramNormalised := a.frequency.BigramNormalised
 	temp := make(map[string]float64)
 	topsfbs := make(map[string]float64)
 	for _, sfb := range a.layout.Sfbs() {
