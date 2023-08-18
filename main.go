@@ -1,6 +1,13 @@
 package main
 
-import analysis "chaitanyabsprip/layout_analysis/src"
+import (
+	"fmt"
+	"strings"
+
+	"chaitanyabsprip/layout_analysis/generator"
+	analysis "chaitanyabsprip/layout_analysis/src"
+	"chaitanyabsprip/layout_analysis/util"
+)
 
 var (
 	effortMap = [3][10]float64{
@@ -15,6 +22,14 @@ var (
 	}
 )
 
+func sumMapValues(val map[string]float64) float64 {
+	sum := 0.0
+	for _, v := range val {
+		sum += v
+	}
+	return sum
+}
+
 func main() {
 	freq := analysis.NewFrequency()
 	keymap := [3][10]string{
@@ -24,6 +39,23 @@ func main() {
 	}
 
 	config := analysis.Config{Keymap: keymap, EffortMap: effortMap, FingerMap: fingerMap}
-	anal := analysis.NewAnalysis(config, *freq)
-	analysis.Print(*anal)
+
+	analyzer := analysis.NewAnalyzer(config, *freq)
+	cols := generator.GenColumns()
+	freqs := make(map[string]float64)
+	for _, keys := range cols {
+		freqs[strings.Join(keys[:], "")] = sumMapValues(analyzer.FingerBigramFrequency(keys))
+	}
+	freqs = util.SortMapValues(freqs)
+	count := 0
+	for k, v := range freqs {
+		if v > 1.9 {
+			continue
+		}
+		fmt.Printf("%s: %.3f\n", k, v)
+		count++
+	}
+	fmt.Println(count)
+	// analysis := analysis.NewAnalysis(config, *freq)
+	// analysis.Print(*analysis)
 }

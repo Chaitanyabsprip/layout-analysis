@@ -26,7 +26,7 @@ type Analysis struct {
 }
 
 func NewAnalysis(config Config, frequency Frequency) *Analysis {
-	a := newAnalyzer(config, frequency)
+	a := NewAnalyzer(config, frequency)
 	fe := a.FingerEffort()
 	return &(Analysis{
 		Layout:        a.layout,
@@ -40,7 +40,7 @@ func NewAnalysis(config Config, frequency Frequency) *Analysis {
 	})
 }
 
-func newAnalyzer(config Config, frequency Frequency) *Analyzer {
+func NewAnalyzer(config Config, frequency Frequency) *Analyzer {
 	layout, err := NewLayout(config.Keymap, config.FingerMap)
 	if err != nil {
 		panic(err)
@@ -111,9 +111,13 @@ func (a *Analyzer) SfbRating() float64 {
 	return rating * 100
 }
 
-// func (a *Analyzer) FingerBigramFrequency() map[int]float64 {
-//
-// }
+func (a *Analyzer) FingerBigramFrequency(keys [3]string) map[string]float64 {
+	freq := make(map[string]float64)
+	for _, sfb := range a.layout.SingleSfbs(keys[:]) {
+		freq[sfb] = a.frequency.BigramNormalised[sfb] * 100
+	}
+	return freq
+}
 
 func (a *Analyzer) TopSfbs() map[string]float64 {
 	ngramNormalised := a.frequency.BigramNormalised

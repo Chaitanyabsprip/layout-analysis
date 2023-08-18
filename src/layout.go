@@ -94,16 +94,22 @@ func (l *Layout) Outrolls() []string {
 	return outrolls
 }
 
+func (l *Layout) SingleSfbs(keys []string) []string {
+	sfbs := []string{}
+	for _, key1 := range keys {
+		for _, key2 := range keys {
+			if key1 != key2 {
+				sfbs = append(sfbs, key1+key2)
+			}
+		}
+	}
+	return sfbs
+}
+
 func (l *Layout) Sfbs() []string {
 	sfbs := []string{}
 	for _, keys := range l.FingerKeymap() {
-		for _, key1 := range keys {
-			for _, key2 := range keys {
-				if key1 != key2 {
-					sfbs = append(sfbs, key1+key2)
-				}
-			}
-		}
+		sfbs = append(sfbs, l.SingleSfbs(keys)...)
 	}
 	return sfbs
 }
