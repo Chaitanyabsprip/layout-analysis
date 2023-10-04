@@ -16,7 +16,7 @@ func SortMapValues[V cmp.Ordered, K cmp.Ordered](dict map[K]V) map[K]V {
 		return iok && jok && ival < jval
 	})
 	sorted := make(map[K]V)
-	for _, key := range keys[:100] {
+	for _, key := range keys {
 		sorted[key] = dict[key]
 	}
 	return sorted

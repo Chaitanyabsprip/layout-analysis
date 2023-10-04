@@ -1,6 +1,10 @@
 package analysis
 
-import "sort"
+import (
+	"chaitanyabsprip/layout_analysis/util"
+	"sort"
+	"strings"
+)
 
 type Config struct {
 	Keymap    [3][10]string
@@ -135,4 +139,32 @@ func (a *Analyzer) TopSfbs() map[string]float64 {
 		topsfbs[bigram] = temp[bigram] * 100
 	}
 	return topsfbs
+}
+
+type Column struct {
+	ID        int
+	Frequency float64
+}
+
+func sumMapValues(val map[string]float64) float64 {
+	sum := 0.0
+	for _, v := range val {
+		sum += v
+	}
+	return sum
+}
+
+func GetFingerBigramFrequency(analyzer Analyzer, cols map[string]int) map[string]Column {
+	freqs := make(map[string]float64)
+	colmap := make(map[string]Column)
+	for keys := range cols {
+		keysArr := [3]string{}
+		copy(keysArr[:], strings.Split(keys, ""))
+		freqs[keys] = sumMapValues(analyzer.FingerBigramFrequency(keysArr))
+	}
+	freqs = util.SortMapValues(freqs)
+	for k, v := range freqs {
+		colmap[k] = Column{ID: cols[k], Frequency: v}
+	}
+	return colmap
 }
